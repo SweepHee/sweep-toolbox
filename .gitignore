@@ -1,0 +1,18 @@
+app/node_modules/
+app/dist/
+app/release/
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+python/.venv/
+python/dist/
+python/build/
+*.spec
+
+# Logs
+*.log

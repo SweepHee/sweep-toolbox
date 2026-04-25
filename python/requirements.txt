@@ -1,0 +1,17 @@
+# Image conversion
+Pillow>=11.0.0
+
+# Media conversion (FFmpeg wrapper)
+ffmpeg-python>=0.2.0
+
+# Data conversion
+pandas>=2.2.0
+openpyxl>=3.1.0
+lxml>=5.2.0
+
+# Excel conversion
+xlrd>=2.0.1
+odfpy>=1.4.1
+
+# Packaging
+pyinstaller>=6.11.0

@@ -1,0 +1,67 @@
+{
+  "name": "converter",
+  "version": "0.1.0",
+  "description": "간편변환기 - Cross-platform file conversion desktop app",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k -n \"vite,electron\" -c \"cyan,yellow\" \"vite\" \"wait-on tcp:5173 && cross-env NODE_ENV=development electron .\"",
+    "build": "vite build && electron-builder",
+    "build:win": "vite build && electron-builder --win",
+    "build:mac": "vite build && electron-builder --mac",
+    "build:python": "cd ../python && pyinstaller main.spec",
+    "lint": "eslint src electron --ext .js,.jsx",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": "^0.479.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.5.3",
+    "zustand": "^5.0.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.5",
+    "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^35.1.2",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.25.0",
+    "tailwindcss": "^4.1.5",
+    "vite": "^6.3.3",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.converter.app",
+    "productName": "간편변환기",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../python/dist/converter",
+        "to": "python/converter",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "assets/icons/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "assets/icons/icon.icns",
+      "category": "public.app-category.utilities"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": true
+    }
+  }
+}

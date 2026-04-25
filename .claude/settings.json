@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('metadata', {}\\)\\)\")",
+      "Bash(python -m venv python/.venv)",
+      "Bash(python/.venv/Scripts/pip install *)",
+      "Bash(npx vite *)",
+      "Read(//c/Users/전승희/.claude/projects/c--Users-----Documents-workspace-converter/**)",
+      "Read(//c/Users/전승희/.claude/projects/**)",
+      "Bash(reg query *)",
+      "Bash(find \"c:/Users/전승희/Documents/workspace/converter/python\" -name \"*.py\" -not -path \"*/.venv/*\" -not -path \"*\\\\\\\\.venv\\\\\\\\*\")",
+      "Bash(.venv/Scripts/python.exe -c \"import fitz; print\\(fitz.__version__\\)\")",
+      "Bash(.venv/Scripts/pip.exe install *)",
+      "Bash(ffmpeg -version)",
+      "Bash(.venv/Scripts/python.exe -c \"import ffmpeg; print\\('ffmpeg-python ok'\\); ffmpeg.probe\\('c:/Windows/Media/chimes.wav'\\); print\\('probe ok'\\)\")",
+      "Bash(powershell -Command \"Get-ChildItem 'HKCU:\\\\Software\\\\Classes\\\\SystemFileAssociations\\\\.mp4\\\\shell\\\\' 2>&1\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"c:/Users/전승희/Documents/workspace/converter/scripts/windows/register-dev.ps1\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"Get-ChildItem 'HKCU:\\\\Software\\\\Classes\\\\SystemFileAssociations\\\\.mp4\\\\shell\\\\' -ErrorAction SilentlyContinue; Get-ChildItem 'HKCU:\\\\Software\\\\Classes\\\\SystemFileAssociations\\\\.mp3\\\\shell\\\\' -ErrorAction SilentlyContinue\")",
+      "Bash(findstr \"mp4\\\\|mp3\\\\|ERROR\\\\|error\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command ' *)",
+      "Bash(.venv/Scripts/pip install *)",
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(node -e \"const lr = require\\('./node_modules/lucide-react'\\); console.log\\('Table exists:', typeof lr.Table !== 'undefined'\\)\")"
+    ]
+  }
+}

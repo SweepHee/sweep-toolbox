@@ -1,0 +1,1 @@
+powershell -ExecutionPolicy Bypass -File scripts/windows/unregister.ps1
