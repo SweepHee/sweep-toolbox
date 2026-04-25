@@ -3,7 +3,7 @@
 간편변환기는 **React + Electron + Python** 기반의 데스크톱 파일 변환기입니다.  
 드래그 앤 드롭으로 파일을 넣고 원하는 포맷으로 빠르게 변환할 수 있으며, 변환 이력 관리와 Windows 우클릭 메뉴 연동까지 지원합니다.
 
-## 주요 기능
+## ✨ 주요 기능
 
 - 파일 변환
 - 드래그 앤 드롭 및 파일 선택 업로드
@@ -16,7 +16,7 @@
   - 이미지: JPEG 품질, PDF -> 이미지 DPI
 - Windows 우클릭 컨텍스트 메뉴 변환 (스크립트 등록)
 
-## 업데이트 예정 기능 (로드맵)
+## 🚀 업데이트 예정 기능 (로드맵)
 
 현재 프로젝트는 컨버터 기능 중심으로 제공되고 있으며, 추후 아래 편의 기능을 순차적으로 업데이트할 예정입니다.
 
@@ -31,7 +31,7 @@
 
 > 위 항목은 기획/개발 상황에 따라 우선순위와 제공 시점이 조정될 수 있습니다.
 
-## 지원 포맷
+## 🧩 지원 포맷
 
 - 이미지 입력: `jpg`, `jpeg`, `png`, `gif`, `webp`, `bmp`, `tiff`
 - 이미지 출력: `jpg`, `png`, `gif`, `webp`, `bmp`, `tiff`, `pdf`
@@ -46,14 +46,14 @@
 - 엑셀 입력: `xlsx`, `xls`, `xlsm`, `ods`, `tsv`
 - 엑셀 출력: `xlsx`, `ods`, `csv`, `tsv`, `json`, `xml`
 
-## 기술 스택
+## 🛠 기술 스택
 
 - Frontend: React 19, Vite, Tailwind CSS, Zustand
 - Desktop Shell: Electron
 - Backend/Converter: Python (IPC 서버)
 - Python 라이브러리: Pillow, ffmpeg-python, pandas, openpyxl, lxml, xlrd, odfpy
 
-## 프로젝트 구조
+## 🗂 프로젝트 구조
 
 ```text
 converter/
@@ -70,7 +70,7 @@ converter/
 `-- remove_registry.ps1
 ```
 
-## 개발 환경 실행
+## 💻 개발 환경 실행
 
 ### 1) Python 가상환경 준비
 
@@ -95,7 +95,7 @@ npm run dev
 
 - Vite 개발 서버와 Electron 앱이 함께 실행됩니다.
 
-## 빌드
+## 📦 빌드
 
 `app` 디렉터리에서 실행:
 
@@ -106,7 +106,7 @@ npm run build:mac    # macOS용
 npm run build:python # Python 바이너리(Python 폴더 기준)
 ```
 
-## Windows 우클릭 메뉴 등록/해제
+## 🖱 Windows 우클릭 메뉴 등록/해제
 
 루트에서 실행:
 
@@ -120,13 +120,13 @@ powershell -ExecutionPolicy Bypass -File remove_registry.ps1
 - 등록: `scripts/windows/register-dev.ps1` 또는 `scripts/windows/register.ps1`
 - 해제: `scripts/windows/unregister.ps1`
 
-## 동작 방식 요약
+## ⚙ 동작 방식 요약
 
 - Electron 메인 프로세스가 Python 변환 프로세스를 실행합니다.
 - Electron <-> Python 간 통신은 stdin/stdout 기반 line-delimited JSON IPC로 처리됩니다.
 - UI에서 변환 요청 시 파일 경로/타겟 포맷/설정 옵션을 Python으로 전달합니다.
 - 변환 결과를 이력 파일로 저장하고 UI에 반영합니다.
 
-## 라이선스
+## 📄 라이선스
 
 프로젝트 정책에 맞게 라이선스를 추가해 사용하세요.
