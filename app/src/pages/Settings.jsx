@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Film, Image, RotateCcw } from 'lucide-react';
+import { Film, Image, RotateCcw, Power } from 'lucide-react';
 
 const DEFAULT = {
   video: { crf: 23, vsync: 'vfr', audioBitrate: '192k' },
@@ -62,6 +62,11 @@ function Select({ value, options, onChange }) {
 export default function Settings() {
   const [settings, setSettings] = useState(DEFAULT);
   const [saved, setSaved] = useState(false);
+  const [autoLaunch, setAutoLaunch] = useState(false);
+
+  useEffect(() => {
+    window.electronAPI?.getAutoLaunch().then(v => setAutoLaunch(!!v));
+  }, []);
 
   useEffect(() => {
     window.electronAPI?.getSettings().then(s => {
@@ -112,6 +117,21 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      <Section icon={Power} title="시스템">
+        <Row label="시작 시 자동 실행" hint="Windows 로그인 시 앱을 자동으로 시작합니다">
+          <button
+            onClick={() => {
+              const next = !autoLaunch;
+              setAutoLaunch(next);
+              window.electronAPI?.setAutoLaunch(next);
+            }}
+            className={`relative w-10 h-5 rounded-full transition-colors ${autoLaunch ? 'bg-indigo-500' : 'bg-white/10'}`}
+          >
+            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${autoLaunch ? 'left-[22px]' : 'left-0.5'}`} />
+          </button>
+        </Row>
+      </Section>
 
       <Section icon={Film} title="영상 설정">
         <Row

@@ -13,6 +13,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/extension-color": "^3.22.4",
+    "@tiptap/extension-image": "^3.22.4",
+    "@tiptap/extension-placeholder": "^3.22.4",
+    "@tiptap/extension-task-item": "^3.22.4",
+    "@tiptap/extension-task-list": "^3.22.4",
+    "@tiptap/extension-text-style": "^3.22.4",
+    "@tiptap/extension-underline": "^3.22.4",
+    "@tiptap/pm": "^3.22.4",
+    "@tiptap/react": "^3.22.4",
+    "@tiptap/starter-kit": "^3.22.4",
     "lucide-react": "^0.479.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -24,7 +34,7 @@
     "@vitejs/plugin-react": "^4.4.1",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
-    "electron": "^35.1.2",
+    "electron": "^35.7.5",
     "electron-builder": "^26.0.12",
     "eslint": "^9.25.0",
     "tailwindcss": "^4.1.5",
@@ -46,15 +56,21 @@
       {
         "from": "../python/dist/converter",
         "to": "python/converter",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "assets/icons/icon.ico"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "icon": "assets/icons/icon.icns",
       "category": "public.app-category.utilities"
     },

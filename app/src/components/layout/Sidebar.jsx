@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { ArrowLeftRight, Clock, Settings } from 'lucide-react';
+import { ArrowLeftRight, Clock, StickyNote, Settings } from 'lucide-react';
 
 const navItems = [
   { to: '/', icon: ArrowLeftRight, label: '변환' },
   { to: '/history', icon: Clock, label: '이력' },
+  { to: '/notes', icon: StickyNote, label: '메모' },
   { to: '/settings', icon: Settings, label: '설정' },
 ];
 

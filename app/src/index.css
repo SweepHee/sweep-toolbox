@@ -56,3 +56,54 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* ── Tiptap / sticky note editor ──────────────────────────────────────────── */
+.note-prose {
+  outline: none;
+  min-height: 100%;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.note-prose p { margin: 0 0 4px; }
+.note-prose h1 { font-size: 1.4em; font-weight: 700; margin: 0 0 4px; }
+.note-prose h2 { font-size: 1.15em; font-weight: 600; margin: 0 0 4px; }
+.note-prose ul, .note-prose ol { padding-left: 1.4em; margin: 0 0 4px; }
+.note-prose ul { list-style: disc; }
+.note-prose ol { list-style: decimal; }
+.note-prose ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.note-prose ul[data-type="taskList"] > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.note-prose ul[data-type="taskList"] > li > label {
+  display: flex;
+  align-items: center;
+  padding-top: 3px;
+  flex-shrink: 0;
+}
+.note-prose ul[data-type="taskList"] > li > label input[type="checkbox"] {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+.note-prose ul[data-type="taskList"] > li > div {
+  flex: 1;
+}
+.note-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  display: block;
+  margin: 4px 0;
+}
+.note-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  opacity: 0.4;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}

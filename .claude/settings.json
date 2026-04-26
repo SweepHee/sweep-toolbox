@@ -23,7 +23,42 @@
       "Bash(powershell -ExecutionPolicy Bypass -Command ' *)",
       "Bash(.venv/Scripts/pip install *)",
       "Bash(.venv/Scripts/python -c ' *)",
-      "Bash(node -e \"const lr = require\\('./node_modules/lucide-react'\\); console.log\\('Table exists:', typeof lr.Table !== 'undefined'\\)\")"
+      "Bash(node -e \"const lr = require\\('./node_modules/lucide-react'\\); console.log\\('Table exists:', typeof lr.Table !== 'undefined'\\)\")",
+      "Bash(npm run *)",
+      "Bash(taskkill /F /IM electron.exe /T)",
+      "Bash(taskkill /F /IM node.exe /T)",
+      "Bash(node -e \"require\\('./electron/main.js'\\)\")",
+      "Bash(npx electron *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('main:', p.main\\);\")",
+      "Bash(node --check electron/main.js)",
+      "Bash(node_modules/.bin/electron -e \"const {app}=require\\('electron'\\); console.log\\(typeof app\\); app.quit\\(\\);\")",
+      "Bash(echo \"const {app} = require\\('electron'\\); console.log\\(typeof app\\); app.whenReady\\(\\).then\\(\\(\\)=>{app.quit\\(\\)}\\);\")",
+      "Bash(node_modules/.bin/electron /tmp/test_main.js)",
+      "Bash(git stash *)",
+      "Bash(node_modules/.bin/electron .)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":5173\")",
+      "Bash(taskkill /F /PID 26196)",
+      "Bash(taskkill /F /PID 32232)",
+      "PowerShell(Stop-Process -Id 26196 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Id 32232 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(netstat -ano)",
+      "Bash(python -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('electron version:', p.get\\('version', 'unknown'\\)\\)\")",
+      "Bash(\"node_modules/electron/dist/electron.exe\" .)",
+      "Bash(node_modules/electron/dist/electron.exe .)",
+      "Read(//c/Users/전승희/Documents/workspace/**)",
+      "Read(//c/Users/전승희/Documents/**)",
+      "Read(//c/Users/전승희/node_modules/**)",
+      "Read(//c/Users/전승희/AppData/Roaming/npm/node_modules/**)",
+      "Bash(./electron.exe /c/Users/전승희/Documents/workspace/converter/app)",
+      "Bash(node node_modules/electron/cli.js .)",
+      "Bash(unset ELECTRON_RUN_AS_NODE)",
+      "Bash(tasklist)",
+      "Bash(node -e \"const {StickyNote} = require\\('lucide-react'\\); console.log\\('StickyNote:', typeof StickyNote\\);\")",
+      "Bash(node -e ' *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\전승희\\Desktop\\test_electron"
     ]
   }
 }

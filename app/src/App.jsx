@@ -5,6 +5,7 @@ import TitleBar from '@/components/layout/TitleBar';
 import Home from '@/pages/Home';
 import History from '@/pages/History';
 import Settings from '@/pages/Settings';
+import Notes from '@/pages/Notes';
 import { useConverterStore } from '@/store';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/history" element={<History />} />
+            <Route path="/notes" element={<Notes />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
