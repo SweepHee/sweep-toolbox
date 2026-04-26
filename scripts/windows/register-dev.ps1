@@ -67,6 +67,7 @@ $a_opus = @($aAll | Where-Object { $_ -ne 'opus' })
 $e_xlsx = @($eAll | Where-Object { $_ -ne 'xlsx' })
 $e_ods  = @($eAll | Where-Object { $_ -ne 'ods'  })
 $e_tsv  = @($eAll | Where-Object { $_ -ne 'tsv'  })
+$e_json = @($eAll | Where-Object { $_ -ne 'json' })
 
 $extTargets = @{
     '.jpg'  = @('png','gif','webp','bmp','tiff','pdf')
@@ -102,7 +103,9 @@ $extTargets = @{
     '.xlsm' = $e_xlsx
     '.ods'  = $e_ods
     '.tsv'  = $e_tsv
-    '.csv'  = @('xlsx','json','xml')
+    '.csv'     = @('xlsx','json','xml')
+    '.json'    = $e_json
+    '.numbers' = $eAll
 }
 
 function Register-Ext {

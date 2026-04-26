@@ -24,8 +24,8 @@ const EXT_CATEGORY = {
   ogg: 'media', wma: 'media', opus: 'media', aiff: 'media',
   pdf: 'pdf',
   docx: 'document', pptx: 'document', hwp: 'document', hwpx: 'document',
-  xlsx: 'excel', xls: 'excel', xlsm: 'excel', ods: 'excel', tsv: 'excel',
-  csv: 'data', json: 'data', xml: 'data',
+  xlsx: 'excel', xls: 'excel', xlsm: 'excel', ods: 'excel', tsv: 'excel', numbers: 'excel',
+  csv: 'data', json: 'excel', xml: 'data',
 };
 
 function makeItem(file) {

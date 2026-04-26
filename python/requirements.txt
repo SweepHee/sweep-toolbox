@@ -12,6 +12,7 @@ lxml>=5.2.0
 # Excel conversion
 xlrd>=2.0.1
 odfpy>=1.4.1
+numbers-parser>=4.0.0
 
 # Packaging
 pyinstaller>=6.11.0

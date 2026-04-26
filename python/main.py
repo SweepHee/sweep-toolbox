@@ -35,8 +35,8 @@ SUPPORTED_FORMATS = {
                  'mp3', 'wav', 'aac', 'flac', 'm4a', 'ogg', 'wma', 'opus', 'aiff'],
     'document': ['docx', 'pptx', 'hwp', 'hwpx'],
     'pdf':      ['pdf'],
-    'data':     ['csv', 'json', 'xml'],
-    'excel':    ['xlsx', 'xls', 'xlsm', 'ods', 'tsv'],
+    'data':     ['csv', 'xml'],
+    'excel':    ['xlsx', 'xls', 'xlsm', 'ods', 'tsv', 'numbers', 'json'],
 }
 
 history: list[dict] = []

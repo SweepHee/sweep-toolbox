@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from .utils import unique_path
 
-SUPPORTED_IN  = {'xlsx', 'xls', 'xlsm', 'ods', 'tsv', 'numbers'}
+SUPPORTED_IN  = {'xlsx', 'xls', 'xlsm', 'ods', 'tsv', 'numbers', 'json'}
 SUPPORTED_OUT = {'xlsx', 'ods', 'csv', 'tsv', 'json', 'xml'}
 
 
@@ -37,7 +37,46 @@ class ExcelConverter:
                 except (UnicodeDecodeError, UnicodeError):
                     continue
             return pd.read_csv(path, sep='\t', encoding='utf-8-sig', errors='replace')
+        if ext == 'numbers':
+            return self._read_numbers(path)
+        if ext == 'json':
+            return pd.read_json(path)
         raise ValueError(f'지원하지 않는 입력 포맷: {ext}')
+
+    def _read_numbers(self, path: Path) -> pd.DataFrame:
+        from numbers_parser import Document
+        doc = Document(str(path))
+        sheet = doc.sheets[0]
+        table = sheet.tables[0]
+        rows = table.rows(values_only=True)
+
+        if not rows:
+            return pd.DataFrame()
+
+        # 빈 trailing 열 제거
+        max_col = max(
+            (i for row in rows for i, v in enumerate(row) if v is not None),
+            default=0,
+        )
+        rows = [row[:max_col + 1] for row in rows]
+
+        # 빈 trailing 행 제거
+        while rows and all(v is None for v in rows[-1]):
+            rows.pop()
+
+        if len(rows) < 2:
+            return pd.DataFrame()
+
+        headers = [str(h) if h is not None else f'Col{i}' for i, h in enumerate(rows[0])]
+        df = pd.DataFrame(rows[1:], columns=headers)
+
+        # float 열 중 실질적으로 정수인 것을 int로 변환 (numbers-parser 부동소수점 보정)
+        for col in df.select_dtypes(include='float64').columns:
+            non_null = df[col].dropna()
+            if len(non_null) > 0 and (abs(non_null - non_null.round()) < 1e-6).all():
+                df[col] = df[col].round().astype('Int64')
+
+        return df
 
     def _write(self, df: pd.DataFrame, out_path: Path, fmt: str):
         if fmt == 'xlsx':
