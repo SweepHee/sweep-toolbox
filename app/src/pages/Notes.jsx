@@ -1,31 +1,58 @@
-import { useEffect, useState } from 'react';
-import { Plus, Eye, EyeOff, Trash2, ExternalLink, AlignJustify, LayoutGrid, StickyNote, ArrowUpLeft, ArrowUpRight, ArrowDownLeft, ArrowDownRight, Minimize2, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
-import { useNotesStore } from '@/store/notesStore';
+import { useEffect, useState } from "react";
+import {
+  Plus,
+  Eye,
+  EyeOff,
+  Trash2,
+  ExternalLink,
+  AlignJustify,
+  LayoutGrid,
+  StickyNote,
+  ArrowUpLeft,
+  ArrowUpRight,
+  ArrowDownLeft,
+  ArrowDownRight,
+  Minimize2,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Bell,
+} from "lucide-react";
+import { useNotesStore } from "@/store/notesStore";
 
-const NOTE_COLORS = ['#fef9c3', '#fce7f3', '#dbeafe', '#dcfce7', '#ede9fe', '#f1f5f9', '#292524'];
+const NOTE_COLORS = [
+  "#fef9c3",
+  "#fce7f3",
+  "#dbeafe",
+  "#dcfce7",
+  "#ede9fe",
+  "#f1f5f9",
+  "#292524",
+];
 
 function relativeTime(ts) {
   const diff = Date.now() - ts;
-  if (diff < 60_000) return '방금 전';
+  if (diff < 60_000) return "방금 전";
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}분 전`;
   if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}시간 전`;
   return `${Math.floor(diff / 86_400_000)}일 전`;
 }
 
 function stripHtml(html) {
-  if (!html) return '';
+  if (!html) return "";
   return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
-    .replace(/\n{2,}/g, '\n').trim();
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
 }
 
 function firstLine(html) {
   const text = stripHtml(html);
-  const line = text.split('\n')[0].trim();
-  return line.slice(0, 60) || '새 메모';
+  const line = text.split("\n")[0].trim();
+  return line.slice(0, 60) || "새 메모";
 }
 
 function NoteCard({ note, onShow, onHide, onDelete, onFocus }) {
@@ -34,12 +61,17 @@ function NoteCard({ note, onShow, onHide, onDelete, onFocus }) {
   const title = firstLine(note.content);
   const preview = (() => {
     const text = stripHtml(note.content);
-    return text.split('\n').slice(1).join(' ').trim().slice(0, 80);
+    return text.split("\n").slice(1).join(" ").trim().slice(0, 80);
   })();
 
   const handleDelete = () => {
-    if (confirming) { onDelete(); setConfirming(false); }
-    else { setConfirming(true); setTimeout(() => setConfirming(false), 2500); }
+    if (confirming) {
+      onDelete();
+      setConfirming(false);
+    } else {
+      setConfirming(true);
+      setTimeout(() => setConfirming(false), 2500);
+    }
   };
 
   return (
@@ -47,7 +79,7 @@ function NoteCard({ note, onShow, onHide, onDelete, onFocus }) {
       {/* Color swatch */}
       <div
         className="w-2.5 h-full rounded-full shrink-0 self-stretch min-h-[2.5rem]"
-        style={{ background: note.color ?? '#fef9c3', minHeight: '2.5rem' }}
+        style={{ background: note.color ?? "#fef9c3", minHeight: "2.5rem" }}
       />
 
       {/* Content */}
@@ -56,10 +88,25 @@ function NoteCard({ note, onShow, onHide, onDelete, onFocus }) {
           <span className="text-sm font-medium text-white/80 truncate flex-1">
             {title}
           </span>
-          <span className="text-[10px] text-white/25 shrink-0">{relativeTime(note.updatedAt)}</span>
+          <span className="text-[10px] text-white/25 shrink-0">
+            {relativeTime(note.updatedAt)}
+          </span>
         </div>
         {preview && (
           <p className="text-xs text-white/35 mt-0.5 truncate">{preview}</p>
+        )}
+        {note.reminderAt && (
+          <div className="flex items-center gap-1 mt-1">
+            <Bell size={9} className="text-green-400 shrink-0" />
+            <span className="text-[9px] text-green-400/80">
+              {new Date(note.reminderAt).toLocaleString("ko-KR", {
+                month: "numeric",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
         )}
       </div>
 
@@ -68,7 +115,7 @@ function NoteCard({ note, onShow, onHide, onDelete, onFocus }) {
         <button
           onClick={visible ? onHide : onShow}
           className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors"
-          title={visible ? '바탕화면에서 숨기기' : '바탕화면에 표시'}
+          title={visible ? "바탕화면에서 숨기기" : "바탕화면에 표시"}
         >
           {visible ? <Eye size={14} /> : <EyeOff size={14} />}
         </button>
@@ -83,8 +130,8 @@ function NoteCard({ note, onShow, onHide, onDelete, onFocus }) {
         )}
         <button
           onClick={handleDelete}
-          className={`p-1.5 rounded-lg transition-colors ${confirming ? 'bg-red-500/20 text-red-400' : 'hover:bg-white/10 text-white/30 hover:text-red-400'}`}
-          title={confirming ? '한 번 더 클릭하면 삭제됩니다' : '삭제'}
+          className={`p-1.5 rounded-lg transition-colors ${confirming ? "bg-red-500/20 text-red-400" : "hover:bg-white/10 text-white/30 hover:text-red-400"}`}
+          title={confirming ? "한 번 더 클릭하면 삭제됩니다" : "삭제"}
         >
           <Trash2 size={14} />
         </button>
@@ -94,22 +141,34 @@ function NoteCard({ note, onShow, onHide, onDelete, onFocus }) {
 }
 
 const CORNERS = [
-  { key: 'tl', Icon: ArrowUpLeft,    label: '좌상단' },
-  { key: 'tr', Icon: ArrowUpRight,   label: '우상단' },
-  { key: 'bl', Icon: ArrowDownLeft,  label: '좌하단' },
-  { key: 'br', Icon: ArrowDownRight, label: '우하단' },
+  { key: "tl", Icon: ArrowUpLeft, label: "좌상단" },
+  { key: "tr", Icon: ArrowUpRight, label: "우상단" },
+  { key: "bl", Icon: ArrowDownLeft, label: "좌하단" },
+  { key: "br", Icon: ArrowDownRight, label: "우하단" },
 ];
 
 export default function Notes() {
-  const { notes, loadNotes, createNote, deleteNote, showNote, hideNote, focusNote, arrangeNotes, resetNoteSize, collapseAll, expandAll } = useNotesStore();
-  const [corner, setCorner] = useState('tl');
+  const {
+    notes,
+    loadNotes,
+    createNote,
+    deleteNote,
+    showNote,
+    hideNote,
+    focusNote,
+    arrangeNotes,
+    resetNoteSize,
+    collapseAll,
+    expandAll,
+  } = useNotesStore();
+  const [corner, setCorner] = useState("tl");
 
   useEffect(() => {
     loadNotes();
     return window.electronAPI?.onNotesUpdated(() => loadNotes());
   }, []);
 
-  const visibleCount = notes.filter(n => n.visible !== false).length;
+  const visibleCount = notes.filter((n) => n.visible !== false).length;
 
   return (
     <div className="flex flex-col h-full p-6 gap-6 overflow-hidden">
@@ -125,8 +184,7 @@ export default function Notes() {
           onClick={createNote}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold transition-colors"
         >
-          <Plus size={16} />
-          새 메모
+          <Plus size={16} />새 메모
         </button>
       </div>
 
@@ -139,7 +197,7 @@ export default function Notes() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {notes.map(note => (
+            {notes.map((note) => (
               <NoteCard
                 key={note.id}
                 note={note}
@@ -165,7 +223,7 @@ export default function Notes() {
                 key={key}
                 onClick={() => setCorner(key)}
                 title={label}
-                className={`p-1.5 rounded-md transition-colors ${corner === key ? 'bg-white/15 text-white/80' : 'text-white/25 hover:text-white/60'}`}
+                className={`p-1.5 rounded-md transition-colors ${corner === key ? "bg-white/15 text-white/80" : "text-white/25 hover:text-white/60"}`}
               >
                 <Icon size={12} />
               </button>

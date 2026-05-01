@@ -1,26 +1,36 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, dialog, screen } = require('electron');
-const fs = require('fs');
-const path = require('path');
-const { spawn, spawnSync } = require('child_process');
-const readline = require('readline');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  shell,
+  Menu,
+  dialog,
+  screen,
+  Notification,
+} = require("electron");
+const fs = require("fs");
+const path = require("path");
+const { spawn, spawnSync } = require("child_process");
+const readline = require("readline");
 
-const isDev = process.env.NODE_ENV === 'development' ||
-  fs.existsSync(path.join(__dirname, '..', '..', 'python', '.venv'));
+const isDev =
+  process.env.NODE_ENV === "development" ||
+  fs.existsSync(path.join(__dirname, "..", "..", "python", ".venv"));
 
 // ── Settings ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_SETTINGS = {
-  video: { crf: 23, vsync: 'vfr', audioBitrate: '192k' },
+  video: { crf: 23, vsync: "vfr", audioBitrate: "192k" },
   image: { jpegQuality: 95, pdfDpi: 150 },
 };
 
 function getSettingsPath() {
-  return path.join(app.getPath('userData'), 'settings.json');
+  return path.join(app.getPath("userData"), "settings.json");
 }
 
 function loadSettings() {
   try {
-    const raw = fs.readFileSync(getSettingsPath(), 'utf8');
+    const raw = fs.readFileSync(getSettingsPath(), "utf8");
     const saved = JSON.parse(raw);
     return {
       video: { ...DEFAULT_SETTINGS.video, ...saved.video },
@@ -34,9 +44,9 @@ function loadSettings() {
 function settingsToOptions(s) {
   return {
     jpegQuality: s.image.jpegQuality,
-    dpi:         s.image.pdfDpi,
-    crf:         s.video.crf,
-    vsync:       s.video.vsync,
+    dpi: s.image.pdfDpi,
+    crf: s.video.crf,
+    vsync: s.video.vsync,
     audioBitrate: s.video.audioBitrate,
   };
 }
@@ -44,12 +54,12 @@ function settingsToOptions(s) {
 // ── History (file-based) ──────────────────────────────────────────────────────
 
 function getHistoryPath() {
-  return path.join(app.getPath('userData'), 'history.json');
+  return path.join(app.getPath("userData"), "history.json");
 }
 
 function loadHistory() {
   try {
-    return JSON.parse(fs.readFileSync(getHistoryPath(), 'utf8'));
+    return JSON.parse(fs.readFileSync(getHistoryPath(), "utf8"));
   } catch {
     return [];
   }
@@ -57,12 +67,12 @@ function loadHistory() {
 
 function appendHistory(entry) {
   const history = [entry, ...loadHistory()].slice(0, 200);
-  fs.writeFileSync(getHistoryPath(), JSON.stringify(history), 'utf8');
+  fs.writeFileSync(getHistoryPath(), JSON.stringify(history), "utf8");
 }
 
 // ── Notes (file-based) ────────────────────────────────────────────────────────
 
-const noteWindows = new Map();   // noteId → BrowserWindow
+const noteWindows = new Map(); // noteId → BrowserWindow
 const TAB_THICK = 32;
 
 function applyTabConstraints(win, tabLen) {
@@ -76,26 +86,29 @@ function applyTabConstraints(win, tabLen) {
 }
 
 function getNotesPath() {
-  return path.join(app.getPath('userData'), 'notes.json');
+  return path.join(app.getPath("userData"), "notes.json");
 }
 
 function loadNotes() {
-  try { return JSON.parse(fs.readFileSync(getNotesPath(), 'utf8')); }
-  catch { return []; }
+  try {
+    return JSON.parse(fs.readFileSync(getNotesPath(), "utf8"));
+  } catch {
+    return [];
+  }
 }
 
 function saveNotes(notes) {
-  fs.writeFileSync(getNotesPath(), JSON.stringify(notes, null, 2), 'utf8');
+  fs.writeFileSync(getNotesPath(), JSON.stringify(notes, null, 2), "utf8");
 }
 
 // Update a single note by id; optionally notify main window
 function patchNote(noteId, patch, notify = true) {
   const notes = loadNotes();
-  const idx = notes.findIndex(n => n.id === noteId);
+  const idx = notes.findIndex((n) => n.id === noteId);
   if (idx === -1) return null;
   notes[idx] = { ...notes[idx], ...patch, updatedAt: Date.now() };
   saveNotes(notes);
-  if (notify) mainWindow?.webContents.send('notes-updated');
+  if (notify) mainWindow?.webContents.send("notes-updated");
   return notes[idx];
 }
 
@@ -103,7 +116,10 @@ function createNoteWindow(note) {
   // If window already exists, just show it
   const existing = noteWindows.get(note.id);
   if (existing && !existing.isDestroyed()) {
-    if (note.visible !== false) { existing.show(); existing.focus(); }
+    if (note.visible !== false) {
+      existing.show();
+      existing.focus();
+    }
     return existing;
   }
 
@@ -112,8 +128,8 @@ function createNoteWindow(note) {
   const win = new BrowserWindow({
     x: note.x ?? 100,
     y: note.y ?? 100,
-    width:    note.collapsed ? tabLen : (note.width  ?? 280),
-    height:   note.collapsed ? TAB_THICK : (note.height ?? 300),
+    width: note.collapsed ? tabLen : (note.width ?? 280),
+    height: note.collapsed ? TAB_THICK : (note.height ?? 300),
     minWidth: note.collapsed ? 60 : 180,
     minHeight: note.collapsed ? TAB_THICK : 80,
     frame: false,
@@ -122,10 +138,10 @@ function createNoteWindow(note) {
     maximizable: false,
     hasShadow: true,
     transparent: true,
-    backgroundColor: '#00000000',
+    backgroundColor: "#00000000",
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -142,45 +158,49 @@ function createNoteWindow(note) {
   if (isDev) {
     win.loadURL(`http://localhost:5173/note.html?id=${note.id}`);
   } else {
-    win.loadFile(path.join(__dirname, '../dist/note.html'), { query: { id: note.id } });
+    win.loadFile(path.join(__dirname, "../dist/note.html"), {
+      query: { id: note.id },
+    });
   }
 
-  win.once('ready-to-show', () => {
+  win.once("ready-to-show", () => {
     if (note.visible !== false) win.show();
   });
 
   // Intercept close (e.g., Alt+F4) → hide instead of destroy
-  win.on('close', e => {
+  win.on("close", (e) => {
     e.preventDefault();
     win.hide();
     patchNote(note.id, { visible: false });
   });
 
-
   // Windows Aero Snap 차단 (WebkitAppRegion:drag → HTCAPTION → Snap 발동)
-  win.on('will-resize', (event, newBounds) => {
+  win.on("will-resize", (event, newBounds) => {
     const wa = screen.getPrimaryDisplay().workArea;
     const notes = loadNotes();
-    const n = notes.find(n => n.id === note.id);
+    const n = notes.find((n) => n.id === note.id);
     if (n?.collapsed) {
       // 접힌 탭: 높이 항상 TAB_THICK 고정
       if (newBounds.height !== TAB_THICK) event.preventDefault();
     } else {
       // 펼친 상태: 화면 60% 이상으로 바꾸려는 시도(Windows Snap) 차단
-      if (newBounds.width > wa.width * 0.6 || newBounds.height > wa.height * 0.6) {
+      if (
+        newBounds.width > wa.width * 0.6 ||
+        newBounds.height > wa.height * 0.6
+      ) {
         event.preventDefault();
       }
     }
   });
 
-  win.on('moved', () => {
+  win.on("moved", () => {
     const [x, y] = win.getPosition();
     patchNote(note.id, { x, y }, false);
   });
 
-  win.on('resized', () => {
+  win.on("resized", () => {
     const notes = loadNotes();
-    const n = notes.find(n => n.id === note.id);
+    const n = notes.find((n) => n.id === note.id);
     if (!n) return;
     const [width, height] = win.getSize();
     const wa = screen.getPrimaryDisplay().workArea;
@@ -188,7 +208,7 @@ function createNoteWindow(note) {
       patchNote(note.id, { tabLen: width }, false);
     } else {
       if (width > wa.width * 0.6 || height > wa.height * 0.6) {
-        win.setSize((n.width ?? 280), (n.height ?? 300));
+        win.setSize(n.width ?? 280, n.height ?? 300);
         return;
       }
       patchNote(note.id, { width, height }, false);
@@ -196,7 +216,7 @@ function createNoteWindow(note) {
   });
 
   // Don't remove from map on 'closed' since we prevent close; but handle if destroyed
-  win.on('closed', () => noteWindows.delete(note.id));
+  win.on("closed", () => noteWindows.delete(note.id));
 
   noteWindows.set(note.id, win);
   return win;
@@ -220,25 +240,25 @@ let requestIdCounter = 0;
 
 function startPythonProcess() {
   const pythonDir = isDev
-    ? path.join(__dirname, '..', '..', 'python')
-    : path.join(process.resourcesPath, 'python', 'converter');
+    ? path.join(__dirname, "..", "..", "python")
+    : path.join(process.resourcesPath, "python", "converter");
 
-  const isWin = process.platform === 'win32';
+  const isWin = process.platform === "win32";
 
   const pythonExecutable = isDev
-    ? path.join(pythonDir, '.venv', isWin ? 'Scripts/python.exe' : 'bin/python')
-    : path.join(pythonDir, isWin ? 'converter.exe' : 'converter');
+    ? path.join(pythonDir, ".venv", isWin ? "Scripts/python.exe" : "bin/python")
+    : path.join(pythonDir, isWin ? "converter.exe" : "converter");
 
-  const args = isDev ? [path.join(pythonDir, 'main.py')] : [];
+  const args = isDev ? [path.join(pythonDir, "main.py")] : [];
 
   pythonProcess = spawn(pythonExecutable, args, {
-    stdio: ['pipe', 'pipe', 'pipe'],
+    stdio: ["pipe", "pipe", "pipe"],
     cwd: pythonDir,
     windowsHide: true,
   });
 
   const rl = readline.createInterface({ input: pythonProcess.stdout });
-  rl.on('line', (line) => {
+  rl.on("line", (line) => {
     try {
       const msg = JSON.parse(line);
       const { id, ...rest } = msg;
@@ -248,16 +268,16 @@ function startPythonProcess() {
         resolve(rest);
       }
     } catch (e) {
-      console.error('[python stdout parse error]', e.message);
+      console.error("[python stdout parse error]", e.message);
     }
   });
 
-  pythonProcess.stderr.on('data', (data) => {
-    console.error('[python stderr]', data.toString());
+  pythonProcess.stderr.on("data", (data) => {
+    console.error("[python stderr]", data.toString());
   });
 
-  pythonProcess.on('exit', (code) => {
-    console.warn('[python] process exited with code', code);
+  pythonProcess.on("exit", (code) => {
+    console.warn("[python] process exited with code", code);
   });
 }
 
@@ -267,7 +287,7 @@ function sendToPython(payload) {
 
     const timer = setTimeout(() => {
       pendingRequests.delete(id);
-      reject(new Error('Python IPC timeout'));
+      reject(new Error("Python IPC timeout"));
     }, 120_000);
 
     pendingRequests.set(id, (result) => {
@@ -275,7 +295,7 @@ function sendToPython(payload) {
       resolve(result);
     });
 
-    pythonProcess.stdin.write(JSON.stringify({ id, ...payload }) + '\n');
+    pythonProcess.stdin.write(JSON.stringify({ id, ...payload }) + "\n");
   });
 }
 
@@ -285,7 +305,7 @@ function startHistoryWatcher() {
   const histPath = getHistoryPath();
   fs.watchFile(histPath, { interval: 500 }, (curr, prev) => {
     if (curr.mtimeMs !== prev.mtimeMs) {
-      mainWindow?.webContents.send('history-updated');
+      mainWindow?.webContents.send("history-updated");
     }
   });
 }
@@ -299,29 +319,29 @@ function createWindow() {
     minWidth: 960,
     minHeight: 640,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
     },
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
     frame: false,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: "#0f0f0f",
     show: false,
   });
 
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  mainWindow.once("ready-to-show", () => mainWindow.show());
 
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL("http://localhost:5173");
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 
   Menu.setApplicationMenu(null);
 
   // When main window closes, destroy all note windows so window-all-closed fires
-  mainWindow.on('closed', () => {
+  mainWindow.on("closed", () => {
     for (const [, win] of noteWindows) {
       if (!win.isDestroyed()) win.destroy();
     }
@@ -332,39 +352,55 @@ function createWindow() {
 
 // ── 데스크탑 우클릭 메뉴 레지스트리 ─────────────────────────────────────────
 
-const REG_KEY = 'HKCU\\SOFTWARE\\Classes\\DesktopBackground\\Shell\\CreateMemo';
+const REG_KEY = "HKCU\\SOFTWARE\\Classes\\DesktopBackground\\Shell\\CreateMemo";
 
 function getDesktopMenuCommand() {
   const exe = process.execPath;
-  return isDev ? `"${exe}" "${app.getAppPath()}" --create-note` : `"${exe}" --create-note`;
+  return isDev
+    ? `"${exe}" "${app.getAppPath()}" --create-note`
+    : `"${exe}" --create-note`;
 }
 
 function registerDesktopMenu() {
-  spawnSync('reg', ['add', REG_KEY, '/ve', '/d', '메모장 만들기', '/f'], { windowsHide: true });
-  spawnSync('reg', ['add', REG_KEY, '/v', 'Icon', '/d', `${process.execPath},0`, '/f'], { windowsHide: true });
-  spawnSync('reg', ['add', `${REG_KEY}\\command`, '/ve', '/d', getDesktopMenuCommand(), '/f'], { windowsHide: true });
+  spawnSync("reg", ["add", REG_KEY, "/ve", "/d", "메모장 만들기", "/f"], {
+    windowsHide: true,
+  });
+  spawnSync(
+    "reg",
+    ["add", REG_KEY, "/v", "Icon", "/d", `${process.execPath},0`, "/f"],
+    { windowsHide: true },
+  );
+  spawnSync(
+    "reg",
+    ["add", `${REG_KEY}\\command`, "/ve", "/d", getDesktopMenuCommand(), "/f"],
+    { windowsHide: true },
+  );
 }
 
 function unregisterDesktopMenu() {
-  spawnSync('reg', ['delete', REG_KEY, '/f'], { windowsHide: true });
+  spawnSync("reg", ["delete", REG_KEY, "/f"], { windowsHide: true });
 }
-
 
 // ── CLI 인수 파싱 ─────────────────────────────────────────────────────────────
 
 function parseCliArgs(argv) {
   const args = argv.slice(isDev ? 2 : 1);
-  if (args.includes('--create-note')) return { action: 'create-note' };
-  const filePath = args[args.indexOf('--convert') + 1];
-  const toFormat = args[args.indexOf('--to') + 1];
-  if (filePath && toFormat) return { action: 'convert', filePath, toFormat };
+  if (args.includes("--create-note")) return { action: "create-note" };
+  const filePath = args[args.indexOf("--convert") + 1];
+  const toFormat = args[args.indexOf("--to") + 1];
+  if (filePath && toFormat) return { action: "convert", filePath, toFormat };
   return null;
 }
 
 async function runCliConversion(filePath, toFormat) {
   try {
     const options = settingsToOptions(loadSettings());
-    const result = await sendToPython({ action: 'convert', filePath, targetFormat: toFormat, options });
+    const result = await sendToPython({
+      action: "convert",
+      filePath,
+      targetFormat: toFormat,
+      options,
+    });
     if (result.ok) {
       const outputPath = result.data.outputPath;
       appendHistory({
@@ -376,12 +412,16 @@ async function runCliConversion(filePath, toFormat) {
         targetFormat: toFormat,
         timestamp: Date.now(),
       });
-      dialog.showMessageBox({ type: 'info', title: '변환 완료', message: `저장됨:\n${outputPath}` });
+      dialog.showMessageBox({
+        type: "info",
+        title: "변환 완료",
+        message: `저장됨:\n${outputPath}`,
+      });
     } else {
-      dialog.showErrorBox('변환 실패', result.error);
+      dialog.showErrorBox("변환 실패", result.error);
     }
   } catch (e) {
-    dialog.showErrorBox('변환 실패', e.message);
+    dialog.showErrorBox("변환 실패", e.message);
   } finally {
     app.quit();
   }
@@ -390,15 +430,15 @@ async function runCliConversion(filePath, toFormat) {
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 
 // Squirrel 인스톨러 이벤트 처리 (패키징 배포 시)
-if (process.platform === 'win32') {
+if (process.platform === "win32") {
   const sq = process.argv[1];
-  if (sq === '--squirrel-install' || sq === '--squirrel-updated') {
+  if (sq === "--squirrel-install" || sq === "--squirrel-updated") {
     registerDesktopMenu();
     app.quit();
-  } else if (sq === '--squirrel-uninstall') {
+  } else if (sq === "--squirrel-uninstall") {
     unregisterDesktopMenu();
     app.quit();
-  } else if (sq === '--squirrel-obsolete') {
+  } else if (sq === "--squirrel-obsolete") {
     app.quit();
   }
 }
@@ -407,8 +447,8 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', (_event, argv) => {
-    if (argv.includes('--create-note')) {
+  app.on("second-instance", (_event, argv) => {
+    if (argv.includes("--create-note")) {
       createNewNote(screen.getCursorScreenPoint());
     } else if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -419,115 +459,171 @@ if (!gotLock) {
 
 app.whenReady().then(async () => {
   startPythonProcess();
-  await new Promise(r => setTimeout(r, 500));
+  await new Promise((r) => setTimeout(r, 500));
 
   const cliArgs = parseCliArgs(process.argv);
-  if (cliArgs?.action === 'convert') {
+  if (cliArgs?.action === "convert") {
     await runCliConversion(cliArgs.filePath, cliArgs.toFormat);
   } else {
     createWindow();
     startHistoryWatcher();
     restoreNoteWindows();
+    startReminderChecker();
     registerDesktopMenu();
-    if (cliArgs?.action === 'create-note') createNewNote(screen.getCursorScreenPoint());
-    app.on('activate', () => {
+    if (cliArgs?.action === "create-note")
+      createNewNote(screen.getCursorScreenPoint());
+    app.on("activate", () => {
       if (!mainWindow) createWindow();
     });
   }
 });
 
-app.on('window-all-closed', () => {
-  if (pythonProcess) { pythonProcess.kill(); pythonProcess = null; }
-  if (process.platform !== 'darwin') app.quit();
+app.on("window-all-closed", () => {
+  if (pythonProcess) {
+    pythonProcess.kill();
+    pythonProcess = null;
+  }
+  if (process.platform !== "darwin") app.quit();
 });
 
 // ── Converter IPC handlers ────────────────────────────────────────────────────
 
-ipcMain.handle('convert-file', async (_event, request) => {
+ipcMain.handle("convert-file", async (_event, request) => {
   const baseOptions = settingsToOptions(loadSettings());
   const options = { ...baseOptions, ...request.options };
-  return sendToPython({ action: 'convert', ...request, options });
+  return sendToPython({ action: "convert", ...request, options });
 });
 
-ipcMain.handle('get-settings', () => loadSettings());
+ipcMain.handle("get-settings", () => loadSettings());
 
-ipcMain.handle('save-settings', (_event, settings) => {
-  fs.writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf8');
+ipcMain.handle("save-settings", (_event, settings) => {
+  fs.writeFileSync(
+    getSettingsPath(),
+    JSON.stringify(settings, null, 2),
+    "utf8",
+  );
   return { ok: true };
 });
 
-ipcMain.handle('get-supported-formats', async () => {
-  return sendToPython({ action: 'get_formats' });
+ipcMain.handle("get-supported-formats", async () => {
+  return sendToPython({ action: "get_formats" });
 });
 
-ipcMain.handle('load-history', () => loadHistory());
+ipcMain.handle("load-history", () => loadHistory());
 
-ipcMain.handle('append-history', (_event, entry) => {
+ipcMain.handle("append-history", (_event, entry) => {
   appendHistory(entry);
   return { ok: true };
 });
 
-ipcMain.handle('clear-history', () => {
-  fs.writeFileSync(getHistoryPath(), '[]', 'utf8');
+ipcMain.handle("clear-history", () => {
+  fs.writeFileSync(getHistoryPath(), "[]", "utf8");
   return { ok: true };
 });
 
-ipcMain.on('window-minimize', () => mainWindow?.minimize());
-ipcMain.on('window-maximize', () => {
+ipcMain.on("window-minimize", () => mainWindow?.minimize());
+ipcMain.on("window-maximize", () => {
   if (mainWindow?.isMaximized()) mainWindow.unmaximize();
   else mainWindow?.maximize();
 });
-ipcMain.on('window-close', () => mainWindow?.close());
+ipcMain.on("window-close", () => mainWindow?.close());
 
-ipcMain.handle('open-path', async (_event, filePath) => {
+ipcMain.handle("open-path", async (_event, filePath) => {
   shell.showItemInFolder(filePath);
 });
 
-ipcMain.handle('save-as', async (_event, { sourcePath, defaultName }) => {
-  const ext = defaultName.split('.').pop();
+ipcMain.handle("save-as", async (_event, { sourcePath, defaultName }) => {
+  const ext = defaultName.split(".").pop();
   const result = await dialog.showSaveDialog(mainWindow, {
-    defaultPath: path.join(app.getPath('downloads'), defaultName),
-    filters: [{ name: ext.toUpperCase(), extensions: [ext] }, { name: 'All Files', extensions: ['*'] }],
+    defaultPath: path.join(app.getPath("downloads"), defaultName),
+    filters: [
+      { name: ext.toUpperCase(), extensions: [ext] },
+      { name: "All Files", extensions: ["*"] },
+    ],
   });
   if (result.canceled || !result.filePath) return { ok: false };
   fs.copyFileSync(sourcePath, result.filePath);
   return { ok: true, filePath: result.filePath };
 });
 
-ipcMain.handle('get-auto-launch', () => app.getLoginItemSettings().openAtLogin);
-ipcMain.handle('set-auto-launch', (_event, enabled) => {
+ipcMain.handle("get-auto-launch", () => app.getLoginItemSettings().openAtLogin);
+ipcMain.handle("set-auto-launch", (_event, enabled) => {
   app.setLoginItemSettings({ openAtLogin: enabled });
   return { ok: true };
 });
 
-
 // ── Note context menu ─────────────────────────────────────────────────────────
 
-
-ipcMain.handle('show-note-context-menu', (event, state) => {
+ipcMain.handle("show-note-context-menu", (event, state) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  const send = action => event.sender.send('note-context-menu-action', action);
+  const send = (action) =>
+    event.sender.send("note-context-menu-action", action);
 
   const menu = Menu.buildFromTemplate([
-    { label: '굵게',   type: 'checkbox', checked: !!state.bold,      click: () => send('bold') },
-    { label: '기울임', type: 'checkbox', checked: !!state.italic,    click: () => send('italic') },
-    { label: '밑줄',   type: 'checkbox', checked: !!state.underline, click: () => send('underline') },
-    { type: 'separator' },
-    { label: '작은 글자',   click: () => send('fontSize-small') },
-    { label: '보통 글자',   click: () => send('fontSize-normal') },
-    { label: '큰 글자',     click: () => send('fontSize-large') },
-    { label: '매우 큰 글자', click: () => send('fontSize-xlarge') },
-    { type: 'separator' },
-    { label: '본문',         type: 'checkbox', checked: !!state.paragraph, click: () => send('paragraph') },
-    { label: '큰 제목 H1',   type: 'checkbox', checked: !!state.heading1,  click: () => send('heading1') },
-    { label: '작은 제목 H2', type: 'checkbox', checked: !!state.heading2,  click: () => send('heading2') },
-    { type: 'separator' },
-    { label: '목록',     type: 'checkbox', checked: !!state.bulletList,  click: () => send('bulletList') },
-    { label: '번호 목록', type: 'checkbox', checked: !!state.orderedList, click: () => send('orderedList') },
-    { label: '체크박스', type: 'checkbox', checked: !!state.taskList,    click: () => send('taskList') },
-    { type: 'separator' },
-    { label: '글자색…',   click: () => send('color') },
-    { label: '이미지 삽입', click: () => send('insertImage') },
+    {
+      label: "굵게",
+      type: "checkbox",
+      checked: !!state.bold,
+      click: () => send("bold"),
+    },
+    {
+      label: "기울임",
+      type: "checkbox",
+      checked: !!state.italic,
+      click: () => send("italic"),
+    },
+    {
+      label: "밑줄",
+      type: "checkbox",
+      checked: !!state.underline,
+      click: () => send("underline"),
+    },
+    { type: "separator" },
+    { label: "작은 글자", click: () => send("fontSize-small") },
+    { label: "보통 글자", click: () => send("fontSize-normal") },
+    { label: "큰 글자", click: () => send("fontSize-large") },
+    { label: "매우 큰 글자", click: () => send("fontSize-xlarge") },
+    { type: "separator" },
+    {
+      label: "본문",
+      type: "checkbox",
+      checked: !!state.paragraph,
+      click: () => send("paragraph"),
+    },
+    {
+      label: "큰 제목 H1",
+      type: "checkbox",
+      checked: !!state.heading1,
+      click: () => send("heading1"),
+    },
+    {
+      label: "작은 제목 H2",
+      type: "checkbox",
+      checked: !!state.heading2,
+      click: () => send("heading2"),
+    },
+    { type: "separator" },
+    {
+      label: "목록",
+      type: "checkbox",
+      checked: !!state.bulletList,
+      click: () => send("bulletList"),
+    },
+    {
+      label: "번호 목록",
+      type: "checkbox",
+      checked: !!state.orderedList,
+      click: () => send("orderedList"),
+    },
+    {
+      label: "체크박스",
+      type: "checkbox",
+      checked: !!state.taskList,
+      click: () => send("taskList"),
+    },
+    { type: "separator" },
+    { label: "글자색…", click: () => send("color") },
+    { label: "이미지 삽입", click: () => send("insertImage") },
   ]);
 
   menu.popup({ window: win });
@@ -535,10 +631,10 @@ ipcMain.handle('show-note-context-menu', (event, state) => {
 
 // ── Note IPC handlers ─────────────────────────────────────────────────────────
 
-ipcMain.handle('note-get-all', () => loadNotes());
+ipcMain.handle("note-get-all", () => loadNotes());
 
-ipcMain.handle('note-get-data', (_event, noteId) => {
-  return loadNotes().find(n => n.id === noteId) ?? null;
+ipcMain.handle("note-get-data", (_event, noteId) => {
+  return loadNotes().find((n) => n.id === noteId) ?? null;
 });
 
 function createNewNote(pos = null) {
@@ -546,9 +642,9 @@ function createNewNote(pos = null) {
   const offset = (notes.length % 12) * 28;
   const note = {
     id: crypto.randomUUID(),
-    title: '새 메모',
-    content: '',
-    color: '#fef9c3',
+    title: "새 메모",
+    content: "",
+    color: "#fef9c3",
     x: pos ? pos.x : 80 + offset,
     y: pos ? pos.y : 80 + offset,
     width: 280,
@@ -560,41 +656,42 @@ function createNewNote(pos = null) {
     alwaysOnTop: false,
     locked: false,
     visible: true,
+    reminderAt: null,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
   notes.unshift(note);
   saveNotes(notes);
   createNoteWindow(note);
-  mainWindow?.webContents.send('notes-updated');
+  mainWindow?.webContents.send("notes-updated");
   return note;
 }
 
-ipcMain.handle('note-create', () => createNewNote());
+ipcMain.handle("note-create", () => createNewNote());
 
-ipcMain.handle('note-delete', (_event, noteId) => {
+ipcMain.handle("note-delete", (_event, noteId) => {
   const win = noteWindows.get(noteId);
   if (win && !win.isDestroyed()) win.destroy();
   noteWindows.delete(noteId);
-  saveNotes(loadNotes().filter(n => n.id !== noteId));
-  mainWindow?.webContents.send('notes-updated');
+  saveNotes(loadNotes().filter((n) => n.id !== noteId));
+  mainWindow?.webContents.send("notes-updated");
   return { ok: true };
 });
 
-ipcMain.handle('note-update', (_event, noteId, patch) => {
+ipcMain.handle("note-update", (_event, noteId, patch) => {
   // High-frequency (content, position) — don't notify main window
   const notes = loadNotes();
-  const idx = notes.findIndex(n => n.id === noteId);
+  const idx = notes.findIndex((n) => n.id === noteId);
   if (idx === -1) return null;
   notes[idx] = { ...notes[idx], ...patch, updatedAt: Date.now() };
   saveNotes(notes);
   return notes[idx];
 });
 
-ipcMain.handle('note-show', (_event, noteId) => {
+ipcMain.handle("note-show", (_event, noteId) => {
   patchNote(noteId, { visible: true });
   const notes = loadNotes();
-  const note = notes.find(n => n.id === noteId);
+  const note = notes.find((n) => n.id === noteId);
   if (!note) return { ok: false };
   const win = noteWindows.get(noteId);
   if (win && !win.isDestroyed()) {
@@ -606,19 +703,19 @@ ipcMain.handle('note-show', (_event, noteId) => {
   return { ok: true };
 });
 
-ipcMain.handle('note-hide', (_event, noteId) => {
+ipcMain.handle("note-hide", (_event, noteId) => {
   patchNote(noteId, { visible: false });
   const win = noteWindows.get(noteId);
   if (win && !win.isDestroyed()) win.hide();
   return { ok: true };
 });
 
-ipcMain.handle('note-set-collapsed', (_event, noteId, collapsed) => {
+ipcMain.handle("note-set-collapsed", (_event, noteId, collapsed) => {
   patchNote(noteId, { collapsed, edge: null }, false);
   const win = noteWindows.get(noteId);
   if (!win || win.isDestroyed()) return { ok: false };
   const notes = loadNotes();
-  const note = notes.find(n => n.id === noteId);
+  const note = notes.find((n) => n.id === noteId);
   const tabLen = note?.tabLen ?? 240;
   const wa = screen.getPrimaryDisplay().workArea;
 
@@ -632,7 +729,7 @@ ipcMain.handle('note-set-collapsed', (_event, noteId, collapsed) => {
     const noteH = note?.height ?? 300;
     win.setSize(noteW, noteH);
     const [cx, cy] = win.getPosition();
-    const nx = Math.max(wa.x, Math.min(cx, wa.x + wa.width  - noteW));
+    const nx = Math.max(wa.x, Math.min(cx, wa.x + wa.width - noteW));
     const ny = Math.max(wa.y, Math.min(cy, wa.y + wa.height - noteH));
     win.setPosition(nx, ny);
     patchNote(noteId, { x: nx, y: ny }, false);
@@ -640,7 +737,7 @@ ipcMain.handle('note-set-collapsed', (_event, noteId, collapsed) => {
   return { ok: true };
 });
 
-ipcMain.handle('note-focus', (_event, noteId) => {
+ipcMain.handle("note-focus", (_event, noteId) => {
   const win = noteWindows.get(noteId);
   if (win && !win.isDestroyed()) {
     win.show();
@@ -650,7 +747,7 @@ ipcMain.handle('note-focus', (_event, noteId) => {
   return { ok: false };
 });
 
-ipcMain.handle('note-arrange', (_event, type) => {
+ipcMain.handle("note-arrange", (_event, type) => {
   const wa = screen.getPrimaryDisplay().workArea;
   const notes = loadNotes();
   const NOTE_W = 280;
@@ -658,15 +755,15 @@ ipcMain.handle('note-arrange', (_event, type) => {
   const PAD = 20;
   const GAP = 16;
 
-  const [layout, corner = 'tl'] = type.split('-');
-  const isRight  = corner === 'tr' || corner === 'br';
-  const isBottom = corner === 'bl' || corner === 'br';
+  const [layout, corner = "tl"] = type.split("-");
+  const isRight = corner === "tr" || corner === "br";
+  const isBottom = corner === "bl" || corner === "br";
 
-  if (layout === 'cascade') {
+  if (layout === "cascade") {
     notes.forEach((note, i) => {
       const off = (i % 12) * 28;
       const x = isRight
-        ? wa.x + wa.width  - NOTE_W - PAD - off
+        ? wa.x + wa.width - NOTE_W - PAD - off
         : wa.x + PAD + off;
       const y = isBottom
         ? wa.y + wa.height - NOTE_H - PAD - off
@@ -675,13 +772,16 @@ ipcMain.handle('note-arrange', (_event, type) => {
       if (win && !win.isDestroyed()) win.setPosition(x, y);
       patchNote(note.id, { x, y }, false);
     });
-  } else if (layout === 'grid') {
-    const cols = Math.max(1, Math.floor((wa.width - PAD * 2 + GAP) / (NOTE_W + GAP)));
+  } else if (layout === "grid") {
+    const cols = Math.max(
+      1,
+      Math.floor((wa.width - PAD * 2 + GAP) / (NOTE_W + GAP)),
+    );
     notes.forEach((note, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = isRight
-        ? wa.x + wa.width  - NOTE_W - PAD - col * (NOTE_W + GAP)
+        ? wa.x + wa.width - NOTE_W - PAD - col * (NOTE_W + GAP)
         : wa.x + PAD + col * (NOTE_W + GAP);
       const y = isBottom
         ? wa.y + wa.height - NOTE_H - PAD - row * (NOTE_H + GAP)
@@ -692,27 +792,27 @@ ipcMain.handle('note-arrange', (_event, type) => {
     });
   }
 
-  mainWindow?.webContents.send('notes-updated');
+  mainWindow?.webContents.send("notes-updated");
   return { ok: true };
 });
 
-ipcMain.handle('note-collapse-all', () => {
+ipcMain.handle("note-collapse-all", () => {
   const notes = loadNotes();
-  notes.forEach(note => {
+  notes.forEach((note) => {
     patchNote(note.id, { collapsed: true, edge: null }, false);
     const win = noteWindows.get(note.id);
     if (!win || win.isDestroyed()) return;
     applyTabConstraints(win, note.tabLen ?? 240);
-    win.webContents.send('note-updated', { collapsed: true, edge: null });
+    win.webContents.send("note-updated", { collapsed: true, edge: null });
   });
-  mainWindow?.webContents.send('notes-updated');
+  mainWindow?.webContents.send("notes-updated");
   return { ok: true };
 });
 
-ipcMain.handle('note-expand-all', () => {
+ipcMain.handle("note-expand-all", () => {
   const notes = loadNotes();
   const wa = screen.getPrimaryDisplay().workArea;
-  notes.forEach(note => {
+  notes.forEach((note) => {
     patchNote(note.id, { collapsed: false, edge: null }, false);
     const win = noteWindows.get(note.id);
     if (!win || win.isDestroyed()) return;
@@ -727,39 +827,165 @@ ipcMain.handle('note-expand-all', () => {
     const ny = Math.max(wa.y, Math.min(cy, wa.y + wa.height - noteH));
     win.setPosition(nx, ny);
     patchNote(note.id, { x: nx, y: ny }, false);
-    win.webContents.send('note-updated', { collapsed: false, edge: null });
+    win.webContents.send("note-updated", { collapsed: false, edge: null });
   });
-  mainWindow?.webContents.send('notes-updated');
+  mainWindow?.webContents.send("notes-updated");
   return { ok: true };
 });
 
-ipcMain.handle('note-reset-size', () => {
-  const DEFAULT_W = 280, DEFAULT_H = 300;
+ipcMain.handle("note-reset-size", () => {
+  const DEFAULT_W = 280,
+    DEFAULT_H = 300;
   const notes = loadNotes();
-  notes.forEach(note => {
+  notes.forEach((note) => {
     patchNote(note.id, { width: DEFAULT_W, height: DEFAULT_H }, false);
     const win = noteWindows.get(note.id);
     if (win && !win.isDestroyed()) win.setSize(DEFAULT_W, DEFAULT_H);
   });
-  mainWindow?.webContents.send('notes-updated');
+  mainWindow?.webContents.send("notes-updated");
   return { ok: true };
 });
 
-ipcMain.handle('note-set-always-on-top', (_event, noteId, value) => {
+ipcMain.handle("note-set-always-on-top", (_event, noteId, value) => {
   const win = noteWindows.get(noteId);
   if (win && !win.isDestroyed()) win.setAlwaysOnTop(value);
   patchNote(noteId, { alwaysOnTop: value }, false);
   return { ok: true };
 });
 
-ipcMain.handle('note-set-opacity', (_event, noteId, value) => {
+ipcMain.handle("note-set-opacity", (_event, noteId, value) => {
   const win = noteWindows.get(noteId);
   if (win && !win.isDestroyed()) win.setOpacity(value);
   patchNote(noteId, { opacity: value }, false);
   return { ok: true };
 });
 
-ipcMain.handle('note-pick-image', async (event) => {
+// ── Reminder ──────────────────────────────────────────────────────────────────
+
+ipcMain.handle("note-set-reminder", (_event, noteId, reminderAt) => {
+  const updated = patchNote(noteId, { reminderAt });
+  const win = noteWindows.get(noteId);
+  if (win && !win.isDestroyed())
+    win.webContents.send("note-updated", { reminderAt });
+  return updated;
+});
+
+function extractTextFirstLine(html) {
+  if (!html) return '새 메모';
+  const text = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/\n{2,}/g, '\n').trim();
+  return (text.split('\n')[0].trim().slice(0, 60)) || '새 메모';
+}
+
+function shakeWindow(win) {
+  if (!win || win.isDestroyed()) return;
+  const [origX, origY] = win.getPosition();
+  const duration = 2500;
+  const start = Date.now();
+  const timer = setInterval(() => {
+    if (win.isDestroyed()) { clearInterval(timer); return; }
+    const elapsed = Date.now() - start;
+    if (elapsed >= duration) {
+      clearInterval(timer);
+      win.setPosition(origX, origY);
+      return;
+    }
+    const t = elapsed / duration;
+    const decay = Math.pow(1 - t, 0.5);
+    const offset = Math.round(12 * decay * Math.sin(t * Math.PI * 2 * 9));
+    win.setPosition(origX + offset, origY);
+  }, 30);
+}
+
+function fireReminder(note) {
+  patchNote(note.id, { reminderAt: null, visible: true });
+
+  const win = noteWindows.get(note.id);
+  if (win && !win.isDestroyed()) {
+    if (note.collapsed) {
+      const wa = screen.getPrimaryDisplay().workArea;
+      patchNote(note.id, { collapsed: false }, false);
+      win.setResizable(true);
+      win.setMaximumSize(32000, 32000);
+      win.setMinimumSize(180, 80);
+      const noteW = note.width ?? 280;
+      const noteH = note.height ?? 300;
+      win.setSize(noteW, noteH);
+      const [cx, cy] = win.getPosition();
+      const nx = Math.max(wa.x, Math.min(cx, wa.x + wa.width - noteW));
+      const ny = Math.max(wa.y, Math.min(cy, wa.y + wa.height - noteH));
+      win.setPosition(nx, ny);
+      win.webContents.send("note-updated", {
+        collapsed: false,
+        reminderAt: null,
+      });
+    } else {
+      win.webContents.send("note-updated", { reminderAt: null });
+    }
+    win.show();
+    win.setAlwaysOnTop(true, "screen-saver");
+    win.focus();
+    win.flashFrame(true);
+    shakeWindow(win);
+    setTimeout(() => {
+      if (!win.isDestroyed()) {
+        win.setAlwaysOnTop(note.alwaysOnTop ?? false);
+        win.flashFrame(false);
+      }
+    }, 5000);
+  } else {
+    createNoteWindow({
+      ...note,
+      visible: true,
+      collapsed: false,
+      reminderAt: null,
+    });
+    const newWin = noteWindows.get(note.id);
+    if (newWin) {
+      newWin.once("ready-to-show", () => {
+        if (!newWin.isDestroyed()) {
+          newWin.setAlwaysOnTop(true, "screen-saver");
+          newWin.flashFrame(true);
+          shakeWindow(newWin);
+          setTimeout(() => {
+            if (!newWin.isDestroyed()) {
+              newWin.setAlwaysOnTop(note.alwaysOnTop ?? false);
+              newWin.flashFrame(false);
+            }
+          }, 5000);
+        }
+      });
+    }
+  }
+
+  const notif = new Notification({
+    title: '⏰ 미리알림',
+    body: extractTextFirstLine(note.content),
+  });
+  notif.on('click', () => {
+    const w = noteWindows.get(note.id);
+    if (w && !w.isDestroyed()) { w.show(); w.focus(); }
+  });
+  notif.show();
+}
+
+function checkReminders() {
+  const now = Date.now();
+  for (const note of loadNotes()) {
+    if (note.reminderAt && note.reminderAt <= now) fireReminder(note);
+  }
+}
+
+function startReminderChecker() {
+  setTimeout(checkReminders, 3000);
+  setInterval(checkReminders, 30_000);
+}
+
+ipcMain.handle("note-pick-image", async (event) => {
   // Find which note window called this
   let parentWin = mainWindow;
   for (const [, win] of noteWindows) {
@@ -769,12 +995,14 @@ ipcMain.handle('note-pick-image', async (event) => {
     }
   }
   const result = await dialog.showOpenDialog(parentWin, {
-    filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }],
-    properties: ['openFile'],
+    filters: [
+      { name: "Images", extensions: ["jpg", "jpeg", "png", "gif", "webp"] },
+    ],
+    properties: ["openFile"],
   });
   if (result.canceled || !result.filePaths[0]) return null;
   const buffer = fs.readFileSync(result.filePaths[0]);
   const ext = path.extname(result.filePaths[0]).slice(1).toLowerCase();
-  const mime = (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : `image/${ext}`;
-  return { dataUrl: `data:${mime};base64,${buffer.toString('base64')}` };
+  const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
+  return { dataUrl: `data:${mime};base64,${buffer.toString("base64")}` };
 });
